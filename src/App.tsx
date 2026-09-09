@@ -1,9 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { EventItem, ParticipantName } from './types';
+import { supabase } from './lib/supabase';
 import {
-  loadEvents,
-  saveEvents,
-  clearAllEvents,
+  loadEventsFromLocal,
+  saveEventsToLocal,
+  fetchEvents,
+  syncUpsertEvent,
+  syncDeleteEvent,
+  syncClearAllEvents,
   isUserAuthenticated,
   setUserAuthenticated,
 } from './utils/storage';
@@ -17,7 +21,7 @@ import { DayDetailsModal } from './components/DayDetailsModal';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => isUserAuthenticated());
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const [events, setEvents] = useState<EventItem[]>(() => loadEventsFromLocal());
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedParticipants, setSelectedParticipants] = useState<ParticipantName[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,16 +42,44 @@ export function App() {
     events: [],
   });
 
-  // Load events from LocalStorage on mount
+  // Load events from Supabase Cloud on mount & subscribe to Realtime changes
   useEffect(() => {
-    const loaded = loadEvents();
-    setEvents(loaded);
+    let isMounted = true;
+
+    const loadData = async () => {
+      const cloudEvents = await fetchEvents();
+      if (isMounted && cloudEvents) {
+        setEvents(cloudEvents);
+      }
+    };
+
+    loadData();
+
+    // Setup Supabase Realtime channel
+    const channel = supabase
+      .channel('public:events_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        async () => {
+          const freshEvents = await fetchEvents();
+          if (isMounted) {
+            setEvents(freshEvents);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  // Save to LocalStorage whenever events state changes
-  const updateEvents = useCallback((newEvents: EventItem[]) => {
+  // Update local state and storage
+  const updateEventsLocally = useCallback((newEvents: EventItem[]) => {
     setEvents(newEvents);
-    saveEvents(newEvents);
+    saveEventsToLocal(newEvents);
   }, []);
 
   // Auth unlock / lock handlers
@@ -151,17 +183,24 @@ export function App() {
     });
   };
 
-  // CRUD actions
-  const handleSaveEvent = (
+  // CRUD actions with Supabase cloud sync
+  const handleSaveEvent = async (
     eventData: Omit<EventItem, 'id' | 'createdAt'>,
     existingId?: string
   ) => {
     if (existingId) {
       // Edit
+      const existing = events.find((item) => item.id === existingId);
+      const updatedEvent: EventItem = {
+        ...eventData,
+        id: existingId,
+        createdAt: existing ? existing.createdAt : Date.now(),
+      };
       const updated = events.map((item) =>
-        item.id === existingId ? { ...item, ...eventData } : item
+        item.id === existingId ? updatedEvent : item
       );
-      updateEvents(updated);
+      updateEventsLocally(updated);
+      await syncUpsertEvent(updatedEvent);
     } else {
       // Create
       const newEvent: EventItem = {
@@ -169,19 +208,21 @@ export function App() {
         id: 'evt-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
         createdAt: Date.now(),
       };
-      updateEvents([...events, newEvent]);
+      updateEventsLocally([...events, newEvent]);
+      await syncUpsertEvent(newEvent);
     }
   };
 
-  const handleDeleteEvent = (id: string) => {
+  const handleDeleteEvent = async (id: string) => {
     const updated = events.filter((item) => item.id !== id);
-    updateEvents(updated);
+    updateEventsLocally(updated);
+    await syncDeleteEvent(id);
   };
 
-  const handleClearAll = () => {
-    if (window.confirm('Opravdu si přejete smazat veškeré naplánované akce?')) {
-      const cleared = clearAllEvents();
-      setEvents(cleared);
+  const handleClearAll = async () => {
+    if (window.confirm('Opravdu si přejete smazat veškeré naplánované akce ze Supabase i úložiště?')) {
+      updateEventsLocally([]);
+      await syncClearAllEvents();
       setSelectedParticipants([]);
       setSearchQuery('');
     }

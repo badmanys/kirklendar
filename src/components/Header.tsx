@@ -39,10 +39,17 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="w-11 h-11 rounded-full overflow-hidden ring-2 ring-[#ff4359]/60 shadow-[0_0_15px_rgba(255,67,89,0.3)] transition-transform duration-300 group-hover:scale-105 bg-zinc-900 flex items-center justify-center">
               {!avatarError ? (
                 <img
-                  src="/avatar.jpg"
+                  src="/images.jpeg"
                   alt="Charlie s holubem"
                   className="w-full h-full object-cover"
-                  onError={() => setAvatarError(true)}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith('/images.jpeg')) {
+                      target.src = '/avatar.jpg';
+                    } else {
+                      setAvatarError(true);
+                    }
+                  }}
                 />
               ) : (
                 <span className="text-sm font-bold text-[#ff4359]">CK</span>

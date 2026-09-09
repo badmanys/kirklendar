@@ -107,9 +107,15 @@ export const LockScreen: React.FC<LockScreenProps> = ({ onUnlock }) => {
         <div className="relative mb-5 group">
           <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-[#ff4359]/70 shadow-[0_0_30px_rgba(255,67,89,0.45)] bg-zinc-900 transition-transform duration-300 group-hover:scale-105">
             <img
-              src="/avatar.jpg"
+              src="/images.jpeg"
               alt="Charlie s holubem"
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src.endsWith('/images.jpeg')) {
+                  target.src = '/avatar.jpg';
+                }
+              }}
             />
           </div>
           <span className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-[#18181b] border border-zinc-700 flex items-center justify-center shadow-md">
