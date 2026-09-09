@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #09090b;
+    --surface-card: #111115;
+    --surface-input: #18181b;
+    --accent-red: #ff4359;
+  }
+
+  body {
+    background-color: #09090b;
+    color: #f4f4f5;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+  }
+}
+
+/* Tabular numbers for times and countdowns */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Ambient glow background effect */
+.ambient-glow {
+  background: radial-gradient(circle at 50% -10%, rgba(255, 67, 89, 0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.ambient-glow-corner {
+  background: radial-gradient(circle at 100% 100%, rgba(255, 67, 89, 0.06) 0%, transparent 40%);
+  pointer-events: none;
+}
