@@ -18,6 +18,7 @@ import { Sidebar } from './components/Sidebar';
 import { EventModal } from './components/EventModal';
 import { SearchDialog } from './components/SearchDialog';
 import { DayDetailsModal } from './components/DayDetailsModal';
+import { getKirkYearForMonth, formatCzechDateString } from './utils/dateUtils';
 
 export function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => isUserAuthenticated());
@@ -107,6 +108,7 @@ export function App() {
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
+  const currentKirkYear = getKirkYearForMonth(currentYear, currentMonth);
 
   // Navigation handlers
   const handlePrevMonth = () => {
@@ -152,7 +154,9 @@ export function App() {
         const matchParticipant = evt.participants.some((p) =>
           p.toLowerCase().includes(query)
         );
-        const matchDate = evt.startDate.includes(query);
+        const matchDate =
+          evt.startDate.includes(query) ||
+          formatCzechDateString(evt.startDate).toLowerCase().includes(query);
         if (!matchTitle && !matchLocation && !matchParticipant && !matchDate) {
           return false;
         }
@@ -241,7 +245,7 @@ export function App() {
 
       {/* Header */}
       <Header
-        currentYear={currentYear}
+        currentYear={currentKirkYear}
         currentMonth={currentMonth}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}

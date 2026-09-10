@@ -3,7 +3,7 @@ import { Search, Plus, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { CZECH_MONTHS } from '../utils/dateUtils';
 
 interface HeaderProps {
-  currentYear: number;
+  currentYear: string | number;
   currentMonth: number; // 0-11
   onPrevMonth: () => void;
   onNextMonth: () => void;

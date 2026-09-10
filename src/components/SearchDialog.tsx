@@ -51,7 +51,9 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
     const matchParticipant = evt.participants.some((p) =>
       p.toLowerCase().includes(normalizedQuery)
     );
-    const matchDate = evt.startDate.includes(normalizedQuery);
+    const matchDate =
+      evt.startDate.includes(normalizedQuery) ||
+      formatCzechDateString(evt.startDate).toLowerCase().includes(normalizedQuery);
     return matchTitle || matchLocation || matchParticipant || matchDate;
   });
 

@@ -161,9 +161,34 @@ export const formatCountdown = (startDateStr: string, startTime: string): string
   return `${day}. ${CZECH_MONTHS[month - 1].toLowerCase()}`;
 };
 
+/**
+ * Calculates the Kirk year ("XK") for a specific date (year, month 1-12, day 1-31).
+ * Calendar epoch: 9.9.2025 (0K).
+ * New year is always on September 9th (9.9.).
+ * Example: 2026-09-10 -> 1K (1 year since Kirk's death).
+ */
+export const getKirkYear = (year: number, month: number, day: number): string => {
+  const isAfterOrOnSept9 = month > 9 || (month === 9 && day >= 9);
+  const kYear = isAfterOrOnSept9 ? year - 2025 : year - 2026;
+  return `${kYear}K`;
+};
+
+/**
+ * Calculates the Kirk year ("XK") for a calendar month view.
+ * The new Kirk year starts in September (monthIndex 8).
+ * Months Sep-Dec (8-11) are year - 2025.
+ * Months Jan-Aug (0-7) are year - 2026.
+ */
+export const getKirkYearForMonth = (year: number, monthIndex: number): string => {
+  const kYear = monthIndex >= 8 ? year - 2025 : year - 2026;
+  return `${kYear}K`;
+};
+
 export const formatCzechDateString = (dateStr: string): string => {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-').map(Number);
   const monthName = CZECH_MONTHS[m - 1] || '';
-  return `${d}. ${monthName.toLowerCase()} ${y}`;
+  const kirkYear = getKirkYear(y, m, d);
+  return `${d}. ${monthName.toLowerCase()} ${kirkYear}`;
 };
+
